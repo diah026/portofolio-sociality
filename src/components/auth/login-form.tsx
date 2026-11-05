@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { loginUser } from "@/lib/api";
 type LoginFormProps = {
   variant?: "login-awal" | "error" | "fill" | "login";
 };
@@ -10,36 +11,47 @@ type LoginFormProps = {
 export default function LoginForm({ variant = "login-awal" }: LoginFormProps) {
   // State Email
   const [email, setEmail] = useState(
-    variant === "fill" || variant === "login" ? "johndoe@email.com" : "",
+    variant === "fill" || variant === "login" ? "john@email.com" : "",
   );
 
   // State Password
-  const [password, setPassword] = useState(
-    variant === "fill" || variant === "login" ? "johndoe123" : "",
-  );
+  const [password, setPassword] = useState("");
 
   // State untuk ikon mata
   const [showPassword, setShowPassword] = useState(false);
 
   const [message, setMessage] = useState("");
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const isError = variant === "error";
 
-  function handleSubmit(event: { preventDefault: () => void }) {
+  async function handleSubmit(event: { preventDefault: () => void }) {
     event.preventDefault();
+    setMessage("");
 
     if (!email.trim() || !password.trim()) {
       setMessage("Email dan password wajib diisi.");
       return;
     }
 
-    if (email.trim() === "johndoe@email.com" && password === "johndoe123") {
-      setMessage("Login berhasil (simulasi).");
-    } else {
-      setMessage("Invalid email or password");
-    }
+    try {
+      setIsLoading(true);
 
-    // Integrasi API Masih error di 401.
+      const result = await loginUser(email.trim(), password);
+
+      localStorage.setItem("sociality_token", result.token);
+
+      setMessage("Login berhasil!");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat login.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -50,8 +62,8 @@ export default function LoginForm({ variant = "login-awal" }: LoginFormProps) {
           <Image
             src="/icons/Logo.png"
             alt="Sociality"
-            width={30}
-            height={30}
+            width={20}
+            height={20}
             priority
           />
 
